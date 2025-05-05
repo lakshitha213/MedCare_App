@@ -1,16 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import SlideBar from './SlideBar';
+import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
 const Home = () => {
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const navigation = useNavigation();
+
+  const handleNavigate = (screen) => {
+    setSidebarVisible(false);
+    navigation.navigate(screen);
+  };
+
   return (
     <View style={styles.container}>
       {/* Top Purple Section */}
       <View style={styles.topSection}>
         <View style={styles.topBar}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => setSidebarVisible(true)}>
             <Text style={styles.menuBtn}>☰</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.signInBtn}>
@@ -62,6 +72,12 @@ const Home = () => {
           resizeMode="contain"
         />
       </View>
+      {sidebarVisible && (
+        <SlideBar
+          onClose={() => setSidebarVisible(false)}
+          onNavigate={handleNavigate}
+        />
+      )}
     </View>
   );
 };
@@ -128,7 +144,7 @@ const styles = StyleSheet.create({
   },
   arc: {
     position: 'absolute',
-    top: 200,
+    top: 260,
     right: 0,
     left: 0,
     height: '200%',
@@ -150,7 +166,7 @@ const styles = StyleSheet.create({
     width: 400,
     height: 400,
     borderRadius: 24,
-    marginTop: 37,
+    marginTop: 60,
   },
   SearchiconImg: {
     width: 30,
