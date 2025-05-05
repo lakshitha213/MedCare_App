@@ -22,6 +22,9 @@ const SlideBar = ({ onClose, onNavigate }) => {
         <TouchableOpacity style={styles.linkBtn} onPress={() => onNavigate('Home')}>
           <Text style={styles.linkText}>Home</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.linkBtn} onPress={() => onNavigate('Home')}>
+          <Text style={styles.linkText}>Profile</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.linkBtn} onPress={() => onNavigate('Channeling')}>
           <Text style={styles.linkText}>Channeling</Text>
         </TouchableOpacity>
