@@ -13,6 +13,7 @@ export default function App() {
       <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Home" component={Home} />
         {/* You can add more screens here, for example:
+        <Stack.Screen name="Profile" component={AboutUs} />
         <Stack.Screen name="Channeling" component={Channeling} />
         <Stack.Screen name="AboutUs" component={AboutUs} />
         */}
