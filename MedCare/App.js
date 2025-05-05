@@ -1,13 +1,23 @@
 import React from 'react';
-import { SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
 import Home from './component/Home';
 
-const App = () => {
+const Stack = createNativeStackNavigator();
+
+export default function App() {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#7b2ff2" />
-      <Home />
-    </SafeAreaView>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Home" component={Home} />
+        {/* You can add more screens here, for example:
+        <Stack.Screen name="Channeling" component={Channeling} />
+        <Stack.Screen name="AboutUs" component={AboutUs} />
+        */}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
 
@@ -17,5 +27,3 @@ const styles = StyleSheet.create({
     backgroundColor: '#e6c6f5',
   },
 });
-
-export default App;
