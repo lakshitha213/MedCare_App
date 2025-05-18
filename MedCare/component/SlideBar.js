@@ -40,7 +40,7 @@ const SlideBar = ({ onClose, onNavigate }) => {
         <TouchableOpacity style={styles.bottomBtn} onPress={() => onNavigate('Login')}>
           <Text style={styles.bottomBtnText}>Login</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomBtn} onPress={() => onNavigate('SignIn')}>
+        <TouchableOpacity style={styles.bottomBtn} onPress={() => onNavigate('Signup')}>
           <Text style={styles.bottomBtnText}>Sign In</Text>
         </TouchableOpacity>
       </View>
