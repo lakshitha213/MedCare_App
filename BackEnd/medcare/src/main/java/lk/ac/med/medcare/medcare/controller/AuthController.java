@@ -1,6 +1,7 @@
 package lk.ac.med.medcare.medcare.controller;
 
 import lk.ac.med.medcare.medcare.dto.SignupRequest;
+import lk.ac.med.medcare.medcare.dto.LoginRequest;
 import lk.ac.med.medcare.medcare.model.User;
 import lk.ac.med.medcare.medcare.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,4 +44,28 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error during registration: " + e.getMessage());
         }
     }
-} 
+
+    @PostMapping("/authenticate")
+    public ResponseEntity<?> authenticate(@RequestBody LoginRequest loginRequest) {
+        try {
+            // Find user by email
+            User user = userRepository.findByEmail(loginRequest.getEmail());
+            
+            if (user == null) {
+                return ResponseEntity.badRequest().body("Invalid email or password");
+            }
+
+            // Check password (Note: In production, use proper password encryption)
+            if (!user.getPassword().equals(loginRequest.getPassword())) {
+                return ResponseEntity.badRequest().body("Invalid email or password");
+            }
+
+            // Return success response with user data
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error during login: " + e.getMessage());
+        }
+    }
+
+    
+}
