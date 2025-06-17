@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import lk.ac.med.medcare.medcare.dto.LoginRequest;
 import lk.ac.med.medcare.medcare.dto.SignupRequest;
 import lk.ac.med.medcare.medcare.model.User;
 import lk.ac.med.medcare.medcare.repository.UserRepository;
@@ -54,7 +55,7 @@ public class AuthController {
         try {
             // Find user by email
             User user = userRepository.findByEmail(loginRequest.getEmail());
-
+            
             if (user == null) {
                 return ResponseEntity.badRequest().body("Invalid email or password");
             }
@@ -70,4 +71,6 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error during login: " + e.getMessage());
         }
     }
+
+    
 }
