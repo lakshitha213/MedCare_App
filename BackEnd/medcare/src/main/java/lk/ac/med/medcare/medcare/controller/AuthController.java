@@ -1,11 +1,16 @@
 package lk.ac.med.medcare.medcare.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import lk.ac.med.medcare.medcare.dto.SignupRequest;
 import lk.ac.med.medcare.medcare.model.User;
 import lk.ac.med.medcare.medcare.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -43,4 +48,26 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error during registration: " + e.getMessage());
         }
     }
-} 
+
+    @PostMapping("/authenticate")
+    public ResponseEntity<?> authenticate(@RequestBody LoginRequest loginRequest) {
+        try {
+            // Find user by email
+            User user = userRepository.findByEmail(loginRequest.getEmail());
+
+            if (user == null) {
+                return ResponseEntity.badRequest().body("Invalid email or password");
+            }
+
+            // Check password (Note: In production, use proper password encryption)
+            if (!user.getPassword().equals(loginRequest.getPassword())) {
+                return ResponseEntity.badRequest().body("Invalid email or password");
+            }
+
+            // Return success response with user data
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error during login: " + e.getMessage());
+        }
+    }
+}
