@@ -3,6 +3,7 @@ import { View,Text,TextInput, TouchableOpacity,StyleSheet,SafeAreaView,Image,Key
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import SlideBar from './SlideBar';
+import axios from 'axios';
 
 const Signup = () => {
   const navigation = useNavigation();
@@ -42,8 +43,84 @@ const Signup = () => {
     }
   };
 
-  const handleSignup = () => {
-    console.log("Signup data:", form);
+  const handleSignup = async () => {
+    try {
+      if (form.password !== form.confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+      }
+
+      const userData = {
+        firstName: form.firstName,
+        secondName: form.secondName,
+        email: form.email,
+        password: form.password,
+        address: form.address,
+        birthdate: form.birthdate,
+        telephone: form.telephone,
+        profileImage: image
+      };
+
+      console.log('Sending data:', userData); // Debug log
+
+      // First, test the connection
+      try {
+        const testResponse = await axios.get('http://192.168.8.106:8082/api/test/db-connection', {
+          timeout: 5000
+        });
+        console.log('Connection test successful:', testResponse.data);
+      } catch (testError) {
+        console.error('Connection test failed:', testError);
+        alert('Cannot connect to the server. Please make sure the backend is running.');
+        return;
+      }
+
+      // If connection test passes, proceed with signup
+      const response = await axios.post('http://192.168.8.106:8082/api/auth/signup', userData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 15000 // Increased timeout to 15 seconds
+      });
+
+      console.log('Response:', response.data); // Debug log
+      alert(response.data);
+      
+      setForm({
+        firstName: '',
+        secondName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        address: '',
+        birthdate: '',
+        telephone: ''
+      });
+      setImage(null);
+
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Signup error:', error); // Debug log
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response:', error.response.data);
+        alert(error.response.data);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response received:', error.request);
+        if (error.code === 'ECONNABORTED') {
+          alert('Request timed out. Please check your internet connection and try again.');
+        } else {
+          alert('Cannot connect to the server. Please make sure the backend is running and try again.');
+        }
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        console.error('Error message:', error.message);
+        alert('Error: ' + error.message);
+      }
+    }
   };
 
   return (
