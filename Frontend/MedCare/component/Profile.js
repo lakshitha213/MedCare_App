@@ -2,6 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView, View, StyleSheet, Text, Image, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import config from '../config';
 
 const Profile = () => {
     const navigation = useNavigation();
@@ -21,7 +22,7 @@ const Profile = () => {
 
             // Fetch user data
             console.log('Fetching profile for email:', userEmail);
-            const response = await fetch(`http://192.168.8.106:8082/api/users/profile/${userEmail}`);
+            const response = await fetch(`${config.API_URL}/api/users/profile/${userEmail}`);
             console.log('Profile response status:', response.status);
             
             if (!response.ok) {
@@ -34,7 +35,7 @@ const Profile = () => {
 
             // Fetch channeling data if available
             try {
-                const channelingResponse = await fetch(`http://192.168.8.106:8082/api/channeling/user/${userEmail}`);
+                const channelingResponse = await fetch(`${config.API_URL}/api/channeling/user/${userEmail}`);
                 if (channelingResponse.ok) {
                     const channelingData = await channelingResponse.json();
                     setChannelingData(channelingData);

@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Imag
 import { useNavigation } from '@react-navigation/native';
 import SlideBar from './SlideBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import config from '../config';
 
 const Login = () => {
   const navigation = useNavigation();
@@ -22,7 +23,7 @@ const Login = () => {
       console.log('Attempting login with:', { email, password });
       
       // Make API call to your backend
-      const response = await fetch('http://192.168.8.106:8082/api/auth/authenticate', {
+      const response = await fetch(`${config.API_URL}/api/auth/authenticate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

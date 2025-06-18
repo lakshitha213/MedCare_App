@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import SlideBar from './SlideBar';
 import axios from 'axios';
+import config from '../config';
 
 const Signup = () => {
   const navigation = useNavigation();
@@ -65,7 +66,7 @@ const Signup = () => {
 
       // First, test the connection
       try {
-        const testResponse = await axios.get('http://192.168.8.106:8082/api/test/db-connection', {
+        const testResponse = await axios.get(`${config.API_URL}/api/test/db-connection`, {
           timeout: 5000
         });
         console.log('Connection test successful:', testResponse.data);
@@ -76,7 +77,7 @@ const Signup = () => {
       }
 
       // If connection test passes, proceed with signup
-      const response = await axios.post('http://192.168.8.106:8082/api/auth/signup', userData, {
+      const response = await axios.post(`${config.API_URL}/api/auth/signup`, userData, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
