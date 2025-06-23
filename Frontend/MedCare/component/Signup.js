@@ -21,6 +21,7 @@ const Signup = () => {
   });
 
   const [image, setImage] = useState(null);
+  const [isSlideBarOpen, setIsSlideBarOpen] = useState(false);
 
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -126,6 +127,23 @@ const Signup = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* SlideBar Button */}
+      <TouchableOpacity style={{position: 'absolute', top: 40, left: 20, zIndex: 200}} onPress={() => setIsSlideBarOpen(true)}>
+        <Image source={require('../assets/png-transparent-hamburger-button-drop-down-list-computer-icons-navigation-bars-and-page-menu-templates-text-rectangle-black-thumbnail-removebg-preview.png')} style={{width: 30, height: 30}} />
+      </TouchableOpacity>
+      {/* SlideBar Overlay */}
+      {isSlideBarOpen && (
+        <View style={{position: 'absolute', top: 0, left: 0, width: '70%', height: '100%', zIndex: 300}}>
+          <SlideBar 
+            onClose={() => setIsSlideBarOpen(false)}
+            onNavigate={(screen) => {
+              setIsSlideBarOpen(false);
+              navigation.navigate(screen);
+            }}
+          />
+        </View>
+      )}
+      {/* Main Signup Content */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
