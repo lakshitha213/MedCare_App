@@ -7,6 +7,7 @@ import Home from './component/Home';
 import Login from './component/Login';
 import Signup from './component/Signup';
 import Profile from './component/Profile';
+import Channeling from './component/Channeling';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,7 @@ export default function App() {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="Profile" component={Profile} />
+        <Stack.Screen name="Channeling" component={Channeling} />
        
         {/* You can add more screens here, for example:
          
