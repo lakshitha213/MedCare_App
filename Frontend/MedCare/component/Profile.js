@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { SafeAreaView, View, StyleSheet, Text, Image, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
+import SlideBar from './SlideBar';
 
 const Profile = () => {
     const navigation = useNavigation();
@@ -10,6 +11,7 @@ const Profile = () => {
     const [userData, setUserData] = useState(null);
     const [channelingData, setChannelingData] = useState(null);
     const [error, setError] = useState(null);
+    const [isSlideBarOpen, setIsSlideBarOpen] = useState(false);
 
     const checkLoginAndLoadData = async () => {
         try {
@@ -89,83 +91,116 @@ const Profile = () => {
     }
 
     return (
-        <ScrollView style={styles.container}>
-            <SafeAreaView style={styles.safeArea}>
-                <View style={styles.header}>
-                    <View style={styles.profileImageContainer}>
-                        <Image
-                            source={
-                                userData?.profileImage 
-                                    ? { uri: userData.profileImage }
-                                    : require('../assets/logo.png')
-                            }
-                            style={styles.profileImage}
-                            resizeMode="cover"
-                            onError={(error) => {
-                                console.error('Error loading profile image:', error.nativeEvent.error);
-                                console.log('Image data:', userData?.profileImage);
-                            }}
-                        />
-                    </View>
-                    <Text style={styles.headerText}>Profile</Text>
+        <View style={{flex: 1}}>
+            {/* SlideBar Button */}
+            <TouchableOpacity style={{position: 'absolute', top: 40, left: 20, zIndex: 200}} onPress={() => setIsSlideBarOpen(true)}>
+                <Image source={require('../assets/png-transparent-hamburger-button-drop-down-list-computer-icons-navigation-bars-and-page-menu-templates-text-rectangle-black-thumbnail-removebg-preview.png')} style={{width: 30, height: 30}} />
+            </TouchableOpacity>
+            {/* SlideBar Overlay */}
+            {isSlideBarOpen && (
+                <View style={{position: 'absolute', top: 0, left: 0, width: '70%', height: '100%', zIndex: 300}}>
+                    <SlideBar 
+                        onClose={() => setIsSlideBarOpen(false)}
+                        onNavigate={(screen) => {
+                            setIsSlideBarOpen(false);
+                            navigation.navigate(screen);
+                        }}
+                    />
                 </View>
-                
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Patient Details</Text>
-                    
-                    <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Name</Text>
-                        <Text style={styles.detailValue}>{`${userData?.firstName} ${userData?.secondName}`}</Text>
+            )}
+            {/* Main Profile Content */}
+            <ScrollView style={styles.container} contentContainerStyle={{paddingTop: 60}}>
+                <SafeAreaView style={styles.safeArea}>
+                    <View style={styles.header}>
+                        <View style={styles.profileImageContainer}>
+                            <Image
+                                source={
+                                    userData?.profileImage 
+                                        ? { uri: userData.profileImage }
+                                        : require('../assets/logo.png')
+                                }
+                                style={styles.profileImage}
+                                resizeMode="cover"
+                                onError={(error) => {
+                                    console.error('Error loading profile image:', error.nativeEvent.error);
+                                    console.log('Image data:', userData?.profileImage);
+                                }}
+                            />
+                        </View>
+                        <Text style={styles.headerText}>Profile</Text>
                     </View>
                     
-                    <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Birth Day</Text>
-                        <Text style={styles.detailValue}>{userData?.birthdate}</Text>
-                    </View>
-                    
-                    <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Telephone Number</Text>
-                        <Text style={styles.detailValue}>{userData?.telephone}</Text>
-                    </View>
-                    
-                    <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Address</Text>
-                        <Text style={styles.detailValue}>{userData?.address}</Text>
-                    </View>
-                    
-                    <View style={styles.detailItem}>
-                        <Text style={styles.detailLabel}>Email</Text>
-                        <Text style={styles.detailValue}>{userData?.email}</Text>
-                    </View>
-                </View>
-                
-                {channelingData && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Channeling Details</Text>
+                        <Text style={styles.sectionTitle}>Patient Details</Text>
                         
                         <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Channeling Name</Text>
-                            <Text style={styles.detailValue}>{channelingData.channelingName}</Text>
+                            <Text style={styles.detailLabel}>Name</Text>
+                            <Text style={styles.detailValue}>{`${userData?.firstName} ${userData?.secondName}`}</Text>
                         </View>
                         
                         <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Doctor's Name</Text>
-                            <Text style={styles.detailValue}>{channelingData.doctorName}</Text>
+                            <Text style={styles.detailLabel}>Birth Day</Text>
+                            <Text style={styles.detailValue}>{userData?.birthdate}</Text>
                         </View>
                         
                         <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Date</Text>
-                            <Text style={styles.detailValue}>{channelingData.date}</Text>
+                            <Text style={styles.detailLabel}>Telephone Number</Text>
+                            <Text style={styles.detailValue}>{userData?.telephone}</Text>
                         </View>
                         
                         <View style={styles.detailItem}>
-                            <Text style={styles.detailLabel}>Time</Text>
-                            <Text style={styles.detailValue}>{channelingData.time}</Text>
+                            <Text style={styles.detailLabel}>Address</Text>
+                            <Text style={styles.detailValue}>{userData?.address}</Text>
+                        </View>
+                        
+                        <View style={styles.detailItem}>
+                            <Text style={styles.detailLabel}>Email</Text>
+                            <Text style={styles.detailValue}>{userData?.email}</Text>
                         </View>
                     </View>
-                )}
-            </SafeAreaView>
-        </ScrollView>
+                    
+                    {channelingData && (
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Channeling Details</Text>
+                            
+                            <View style={styles.detailItem}>
+                                <Text style={styles.detailLabel}>Channeling Name</Text>
+                                <Text style={styles.detailValue}>{channelingData.channelingName}</Text>
+                            </View>
+                            
+                            <View style={styles.detailItem}>
+                                <Text style={styles.detailLabel}>Doctor's Name</Text>
+                                <Text style={styles.detailValue}>{channelingData.doctorName}</Text>
+                            </View>
+                            
+                            <View style={styles.detailItem}>
+                                <Text style={styles.detailLabel}>Date</Text>
+                                <Text style={styles.detailValue}>{channelingData.date}</Text>
+                            </View>
+                            
+                            <View style={styles.detailItem}>
+                                <Text style={styles.detailLabel}>Time</Text>
+                                <Text style={styles.detailValue}>{channelingData.time}</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={{ backgroundColor: 'red', padding: 10, borderRadius: 5, marginTop: 10, alignItems: 'center' }}
+                                onPress={async () => {
+                                    try {
+                                        await fetch(`${config.API_URL}/api/channeling/delete/${channelingData.id}`, { method: 'DELETE' });
+                                        setChannelingData(null);
+                                        Alert.alert('Success', 'Channeling deleted successfully');
+                                    } catch (err) {
+                                        Alert.alert('Error', 'Failed to delete channeling');
+                                    }
+                                }}
+                            >
+                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Channeling</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </SafeAreaView>
+            </ScrollView>
+        </View>
     );
 };
 
