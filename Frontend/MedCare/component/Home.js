@@ -1,18 +1,46 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Dimensions, FlatList } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import SlideBar from './SlideBar';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
 
 const { width } = Dimensions.get('window');
 
 const Home = () => {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const navigation = useNavigation();
+  const [search, setSearch] = useState('');
+  const [doctors, setDoctors] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:8082/api/doctors/all')
+      .then(res => setDoctors(res.data))
+      .catch(err => console.error('Error fetching doctors:', err));
+  }, []);
+
+  useEffect(() => {
+    if (search.trim() === '') {
+      setSuggestions([]);
+    } else {
+      setSuggestions(
+        doctors.filter(doc =>
+          doc.name.toLowerCase().includes(search.toLowerCase())
+        )
+      );
+    }
+  }, [search, doctors]);
 
   const handleNavigate = (screen) => {
     setSidebarVisible(false);
     navigation.navigate(screen);
+  };
+
+  const handleSuggestionPress = (name) => {
+    setSearch(name);
+    setSuggestions([]);
+    navigation.navigate('Channeling', { doctorName: name });
   };
 
   return (
@@ -32,6 +60,10 @@ const Home = () => {
             style={styles.searchInput}
             placeholder="Search Doctor"
             placeholderTextColor="#888"
+            value={search}
+            onChangeText={setSearch}
+            autoCorrect={false}
+            autoCapitalize="none"
           />
           <View style={styles.verticalLine} />
           <TouchableOpacity>
@@ -44,6 +76,23 @@ const Home = () => {
             </Text>
           </TouchableOpacity>
         </View>
+        {/* Suggestions Dropdown */}
+        {suggestions.length > 0 && (
+          <View style={{ backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 8, maxHeight: 150, elevation: 3, zIndex: 10 }}>
+            <FlatList
+              data={suggestions}
+              keyExtractor={item => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
+                  onPress={() => handleSuggestionPress(item.name)}
+                >
+                  <Text style={{ fontSize: 16 }}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
       </View>
 
       {/* Lower Section with arc */}
