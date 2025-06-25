@@ -13,4 +13,5 @@ public class SignupRequest {
     private String birthdate;
     private String telephone;
     private String profileImage;
+    private String imageUrl;
 }

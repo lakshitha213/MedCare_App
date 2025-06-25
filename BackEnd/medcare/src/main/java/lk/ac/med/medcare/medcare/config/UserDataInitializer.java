@@ -51,6 +51,18 @@ public class UserDataInitializer implements CommandLineRunner {
             admin.setTelephone("5555555555");
             admin.setRole("ADMIN");
             userRepository.save(admin);
+
+            // Custom Admin User (Username: Admin, Password: Admin12345)
+            User customAdmin = new User();
+            customAdmin.setFirstName("Admin");
+            customAdmin.setSecondName("Admin");
+            customAdmin.setEmail("admin@admin.com");
+            customAdmin.setPassword("Admin12345"); // In production, this should be encrypted
+            customAdmin.setAddress("Admin Address");
+            customAdmin.setBirthdate("1990-01-01");
+            customAdmin.setTelephone("0000000000");
+            customAdmin.setRole("ADMIN");
+            userRepository.save(customAdmin);
         }
     }
 } 

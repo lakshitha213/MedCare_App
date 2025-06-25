@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, KeyboardAvoidingView, ScrollView, Platform, Alert, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import SlideBar from './SlideBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
 
 const Login = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -51,15 +52,18 @@ const Login = () => {
             {
               text: 'OK',
               onPress: () => {
-                // Navigate to Profile after successful login
-                navigation.navigate('Profile');
+                // Always navigate to Profile after login
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'Profile' }],
+                });
               }
             }
           ]
         );
       } else {
-        console.log('Login failed:', data);
-        Alert.alert('Error', data.message || 'Invalid email or password');
+        // Show error message for wrong email or password
+        Alert.alert('Login Failed', data.message || 'Invalid email or password. Please try again.');
       }
     } catch (error) {
       console.error('Login error details:', error);

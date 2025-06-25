@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View,Text,TextInput, TouchableOpacity,StyleSheet,SafeAreaView,Image,KeyboardAvoidingView,ScrollView,Platform,} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Image, KeyboardAvoidingView, ScrollView, Platform, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
-import SlideBar from './SlideBar';
-import axios from 'axios';
-import config from '../config';
+import SlideBar from './SlideBar'; // Assuming SlideBar is a local component
+import axios from 'axios'; // Although you're using fetch, axios is imported. Keeping it for context.
+import config from '../config'; // Assuming config holds your API_URL
 
 const Signup = () => {
   const navigation = useNavigation();
@@ -20,7 +20,11 @@ const Signup = () => {
     telephone: '',
   });
 
-  const [image, setImage] = useState(null);
+  // State to store image URI and its MIME type
+  const [profileImageUri, setProfileImageUri] = useState(null);
+  const [profileImageMimeType, setProfileImageMimeType] = useState(null);
+  const [profileImageName, setProfileImageName] = useState(null); // To store a suitable filename
+
   const [isSlideBarOpen, setIsSlideBarOpen] = useState(false);
 
   const handleChange = (key, value) => {
@@ -30,127 +34,157 @@ const Signup = () => {
   const handleImagePick = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      alert("Permission to access media library is required!");
+      // Replaced alert with React Native Alert
+      Alert.alert("Permission Required", "Permission to access media library is required!");
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
+      // Corrected: Use ImagePicker.MediaType instead of deprecated ImagePicker.MediaTypeOptions
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
       allowsEditing: true,
+      base64: false, // We don't need base64 for multipart upload unless explicitly sending base64
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      const asset = result.assets[0];
+      setProfileImageUri(asset.uri);
+      setProfileImageMimeType(asset.mimeType); // Crucial: Get the exact MIME type
+      // Extract filename from URI for better naming on backend
+      const filename = asset.uri.split('/').pop();
+      setProfileImageName(filename);
+
+      console.log("ImagePicker Result Asset:", asset);
+      console.log("Selected Image URI:", asset.uri);
+      console.log("Selected Image MIME Type:", asset.mimeType);
     }
   };
 
   const handleSignup = async () => {
     try {
       if (form.password !== form.confirmPassword) {
-        alert("Passwords do not match!");
+        Alert.alert("Password Mismatch", "Passwords do not match!");
         return;
       }
 
-      const userData = {
-        firstName: form.firstName,
-        secondName: form.secondName,
-        email: form.email,
-        password: form.password,
-        address: form.address,
-        birthdate: form.birthdate,
-        telephone: form.telephone,
-        profileImage: image
-      };
+      const formData = new FormData();
+      formData.append('firstName', form.firstName);
+      formData.append('secondName', form.secondName);
+      formData.append('email', form.email);
+      formData.append('password', form.password);
+      formData.append('confirmPassword', form.confirmPassword); // confirmPassword is not used in backend, but keeping for form validation
+      formData.append('address', form.address);
+      formData.append('birthdate', form.birthdate);
+      formData.append('telephone', form.telephone);
 
-      console.log('Sending data:', userData); // Debug log
+      // Append image if selected
+      if (profileImageUri && profileImageMimeType) {
+        // *** CRITICAL CHANGE HERE ***
+        // Convert the data URI (base64 string) to a Blob object
+        const response = await fetch(profileImageUri);
+        const blob = await response.blob();
 
-      // First, test the connection
-      try {
-        const testResponse = await axios.get(`${config.API_URL}/api/test/db-connection`, {
-          timeout: 5000
+        // Ensure a suitable filename, falling back to a generic one
+        const fileName = profileImageName || `profile_${Date.now()}.${profileImageMimeType.split('/')[1] || 'jpeg'}`;
+
+        // Append the Blob directly. FormData will handle it correctly as a file.
+        formData.append('profileImage', blob, fileName);
+
+        console.log("Converted data URI to Blob and appending to FormData:", {
+          uri: profileImageUri,
+          type: profileImageMimeType,
+          name: fileName,
+          blobSize: blob.size
         });
-        console.log('Connection test successful:', testResponse.data);
-      } catch (testError) {
-        console.error('Connection test failed:', testError);
-        alert('Cannot connect to the server. Please make sure the backend is running.');
-        return;
-      }
-
-      // If connection test passes, proceed with signup
-      const response = await axios.post(`${config.API_URL}/api/auth/signup`, userData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        timeout: 15000 // Increased timeout to 15 seconds
-      });
-
-      console.log('Response:', response.data); // Debug log
-      alert(response.data);
-      
-      setForm({
-        firstName: '',
-        secondName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        address: '',
-        birthdate: '',
-        telephone: ''
-      });
-      setImage(null);
-
-      navigation.navigate('Login');
-    } catch (error) {
-      console.error('Signup error:', error); // Debug log
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Error response:', error.response.data);
-        alert(error.response.data);
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('No response received:', error.request);
-        if (error.code === 'ECONNABORTED') {
-          alert('Request timed out. Please check your internet connection and try again.');
-        } else {
-          alert('Cannot connect to the server. Please make sure the backend is running and try again.');
-        }
       } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Error message:', error.message);
-        alert('Error: ' + error.message);
+        console.log("No profile image selected or available to send.");
       }
+
+      console.log('Sending FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}:`, typeof value === 'object' && value instanceof Blob ? `[Blob: ${value.type}, ${value.size} bytes]` : value);
+      }
+
+      const response = await fetch(`${config.API_URL}/api/auth/signup`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json',
+          // IMPORTANT: Do NOT set 'Content-Type': 'multipart/form-data'.
+          // Fetch automatically sets the correct Content-Type header with the boundary.
+        },
+      });
+
+      const responseText = await response.text(); // Get response as text first
+      console.log("Backend Response Status:", response.status);
+      console.log("Backend Response Text:", responseText);
+
+      if (response.ok) {
+        Alert.alert('Success', 'User registered successfully!');
+        // Clear form fields
+        setForm({
+          firstName: '',
+          secondName: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          address: '',
+          birthdate: '',
+          telephone: ''
+        });
+        setProfileImageUri(null);
+        setProfileImageMimeType(null);
+        setProfileImageName(null);
+        navigation.navigate('Login');
+      } else {
+        // Parse error message from backend
+        let errorMessage = "Unknown error during signup.";
+        try {
+          const errorJson = JSON.parse(responseText);
+          if (errorJson.message) {
+            errorMessage = errorJson.message;
+          } else {
+            errorMessage = responseText;
+          }
+        } catch (e) {
+          errorMessage = responseText; // If not JSON, use the raw text
+        }
+        Alert.alert('Signup Failed', errorMessage);
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      Alert.alert('Error', 'Error during signup. Please try again later.');
     }
   };
 
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* SlideBar Button */}
-      <TouchableOpacity style={{position: 'absolute', top: 40, left: 20, zIndex: 200}} onPress={() => setIsSlideBarOpen(true)}>
-        <Image source={require('../assets/png-transparent-hamburger-button-drop-down-list-computer-icons-navigation-bars-and-page-menu-templates-text-rectangle-black-thumbnail-removebg-preview.png')} style={{width: 30, height: 30}} />
-      </TouchableOpacity>
-      {/* SlideBar Overlay */}
-      {isSlideBarOpen && (
-        <View style={{position: 'absolute', top: 0, left: 0, width: '70%', height: '100%', zIndex: 300}}>
-          <SlideBar 
-            onClose={() => setIsSlideBarOpen(false)}
-            onNavigate={(screen) => {
-              setIsSlideBarOpen(false);
-              navigation.navigate(screen);
-            }}
-          />
-        </View>
-      )}
-      {/* Main Signup Content */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoidingView}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* SlideBar Button */}
+          <TouchableOpacity style={styles.menuBtn} onPress={() => setIsSlideBarOpen(true)}>
+            <Image source={require('../assets/png-transparent-hamburger-button-drop-down-list-computer-icons-navigation-bars-and-page-menu-templates-text-rectangle-black-thumbnail-removebg-preview.png')} style={{ width: 30, height: 30 }} />
+          </TouchableOpacity>
+          {/* SlideBar Overlay */}
+          {isSlideBarOpen && (
+            <View style={{ position: 'absolute', top: 0, left: 0, width: '70%', height: '100%', zIndex: 300 }}>
+              <SlideBar
+                onClose={() => setIsSlideBarOpen(false)}
+                onNavigate={(screen) => {
+                  setIsSlideBarOpen(false);
+                  navigation.navigate(screen);
+                }}
+              />
+            </View>
+          )}
+          {/* Main Signup Content */}
           <View style={styles.container}>
-            <Text style={styles.heroTitle}>Sign In</Text>
+            <Text style={styles.heroTitle}>Sign Up</Text>
 
             <Text style={styles.label}>First Name</Text>
             <TextInput
@@ -231,12 +265,12 @@ const Signup = () => {
 
             <TouchableOpacity style={styles.imagePicker} onPress={handleImagePick}>
               <Text style={styles.imagePickerText}>
-                {image ? 'Change Image' : 'Upload Image'}
+                {profileImageUri ? 'Change Image' : 'Upload Profile Image'}
               </Text>
             </TouchableOpacity>
 
-            {image && (
-              <Image source={{ uri: image }} style={styles.uploadedImage} />
+            {profileImageUri && (
+              <Image source={{ uri: profileImageUri }} style={styles.uploadedImage} />
             )}
 
             <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
@@ -256,85 +290,105 @@ const Signup = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'rgba(218,166,231,255)',
+    backgroundColor: '#e6c6f5'
   },
   keyboardAvoidingView: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
+    justifyContent: 'center',
+    paddingTop: 80, // Space for the hamburger icon
     paddingBottom: 20,
   },
   container: {
-    backgroundColor: 'white',
-    margin: 20,
+    paddingHorizontal: 25,
+    paddingVertical: 30,
+    backgroundColor: '#f8f9fa',
     borderRadius: 15,
-    padding: 25,
-    elevation: 5,
+    marginHorizontal: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 8,
   },
   heroTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 20,
+    fontSize: 32,
+    fontWeight: '700',
     color: '#333',
+    marginBottom: 25,
+    textAlign: 'center',
   },
   label: {
     fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 5,
     color: '#555',
+    marginBottom: 8,
+    fontWeight: '500',
   },
   input: {
     height: 50,
+    borderColor: '#e0e0e0',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 15,
-    marginBottom: 15,
+    marginBottom: 20,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
     color: '#333',
+    backgroundColor: '#fefefe',
   },
   imagePicker: {
-    backgroundColor: '#4a90e2',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: '#007bff',
+    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: 'center',
-    marginVertical: 10,
+    marginBottom: 15,
   },
   imagePickerText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
   },
   uploadedImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
+    width: 150,
+    height: 150,
+    borderRadius: 75, // Make it circular
     alignSelf: 'center',
-    marginTop: 10,
+    marginBottom: 20,
+    borderColor: '#e0e0e0',
+    borderWidth: 1,
+    resizeMode: 'cover', // Ensures image covers the area
   },
   signupButton: {
-    backgroundColor: '#4a90e2',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#28a745',
+    paddingVertical: 15,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
+    marginBottom: 15,
+    shadowColor: '#28a745',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   signupButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
   },
   backToLogin: {
+    fontSize: 16,
+    color: '#007bff',
     textAlign: 'center',
-    marginTop: 15,
-    color: '#4a90e2',
-    fontWeight: '500',
+    marginTop: 10,
+    textDecorationLine: 'underline',
+  },
+  menuBtn: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 200,
   },
 });
 

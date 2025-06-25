@@ -2,17 +2,14 @@ package lk.ac.med.medcare.medcare.controller;
 
 import lk.ac.med.medcare.medcare.model.AddDoctor;
 import lk.ac.med.medcare.medcare.repository.AddDoctorRepository;
+import lk.ac.med.medcare.medcare.service.ImageUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/doctors")
@@ -20,7 +17,8 @@ public class AddDoctorController {
     @Autowired
     private AddDoctorRepository addDoctorRepository;
 
-    private static final String UPLOAD_DIR = "uploads/doctor_photos/";
+    @Autowired
+    private ImageUploadService imageUploadService;
 
     @PostMapping("/add")
     public ResponseEntity<?> addDoctor(
@@ -42,16 +40,11 @@ public class AddDoctorController {
 
         if (photo != null && !photo.isEmpty()) {
             try {
-                File uploadDir = new File(UPLOAD_DIR);
-                if (!uploadDir.exists()) {
-                    uploadDir.mkdirs();
-                }
-                String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
-                Path filePath = Paths.get(UPLOAD_DIR, fileName);
-                Files.write(filePath, photo.getBytes());
-                doctor.setPhoto(filePath.toString());
+                // Upload to Cloudinary
+                String imageUrl = imageUploadService.uploadImage(photo);
+                doctor.setPhoto(imageUrl);
             } catch (IOException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Photo upload failed");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Photo upload failed: " + e.getMessage());
             }
         }
 

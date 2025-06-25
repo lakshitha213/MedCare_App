@@ -4,6 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import SlideBar from './SlideBar';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -13,6 +14,7 @@ const Home = () => {
   const [search, setSearch] = useState('');
   const [doctors, setDoctors] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     axios.get('http://localhost:8082/api/doctors/all')
@@ -26,11 +28,23 @@ const Home = () => {
     } else {
       setSuggestions(
         doctors.filter(doc =>
-          doc.name.toLowerCase().includes(search.toLowerCase())
+          doc.name.toLowerCase().includes(search.toLowerCase()) ||
+          (doc.category && doc.category.toLowerCase().includes(search.toLowerCase()))
         )
       );
     }
   }, [search, doctors]);
+
+  useEffect(() => {
+    const checkLogin = async () => {
+      const userEmail = await AsyncStorage.getItem('userEmail');
+      setLoggedIn(!!userEmail);
+    };
+    checkLogin();
+    // Listen for focus to update login state
+    const unsubscribe = navigation.addListener('focus', checkLogin);
+    return unsubscribe;
+  }, [navigation]);
 
   const handleNavigate = (screen) => {
     setSidebarVisible(false);
@@ -43,6 +57,11 @@ const Home = () => {
     navigation.navigate('Channeling', { doctorName: name });
   };
 
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem('userEmail');
+    setLoggedIn(false);
+  };
+
   return (
     <View style={styles.container}>
       {/* Top Purple Section */}
@@ -51,9 +70,15 @@ const Home = () => {
           <TouchableOpacity onPress={() => setSidebarVisible(true)}>
             <Text style={styles.menuBtn}>☰</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.signInBtn}>
-            <Text style={styles.signInText}>Sign In</Text>
-          </TouchableOpacity>
+          {loggedIn ? (
+            <TouchableOpacity style={styles.signInBtn} onPress={handleLogout}>
+              <Text style={styles.signInText}>LOGOUT</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.signInBtn} onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.signInText}>LOGIN</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.searchSection}>
           <TextInput
@@ -87,10 +112,16 @@ const Home = () => {
                   style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}
                   onPress={() => handleSuggestionPress(item.name)}
                 >
-                  <Text style={{ fontSize: 16 }}>{item.name}</Text>
+                  <Text style={{ fontSize: 16 }}>{item.name} <Text style={{ color: '#888', fontSize: 14 }}>({item.category})</Text></Text>
                 </TouchableOpacity>
               )}
             />
+          </View>
+        )}
+        {/* Show doctor list if searching and not using suggestions dropdown */}
+        {search.trim() !== '' && suggestions.length === 0 && (
+          <View style={{ backgroundColor: '#fff', marginHorizontal: 16, borderRadius: 8, maxHeight: 200, elevation: 3, zIndex: 10, marginTop: 8, padding: 8 }}>
+            <Text style={{ color: '#888', textAlign: 'center' }}>No doctors found.</Text>
           </View>
         )}
       </View>

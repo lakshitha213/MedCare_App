@@ -1,5 +1,5 @@
 const config = {
-    API_URL: 'http://172.16.20.34:8082'
+    API_URL: 'http://192.168.8.104:8082'
     
 };
 

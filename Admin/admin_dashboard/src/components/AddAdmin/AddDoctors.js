@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AddDoctors.css';
 import axios from 'axios';
+import { useNavigate } from 'react-router';
 
 const AddDoctors = () => {
   const [doctors, setDoctors] = useState([]);
@@ -14,6 +15,29 @@ const AddDoctors = () => {
     photo: null
   });
   const [activeTab, setActiveTab] = useState('add'); // 'add' or 'list'
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const categories = [
+    'General & Primary Care',
+    'Cardiology & Related',
+    'Neurology & Psychology',
+    'Musculoskeletal',
+    'Hematology & Oncology',
+    'Pulmonary & Chest',
+    'Digestive System',
+    'Endocrine & Metabolic',
+    'Kidney & Urology',
+    'Pediatrics & Related',
+    "Women's Health",
+    "Men's Health",
+    'Eye & Vision',
+    'Ear, Nose, Throat (ENT)',
+    'Teeth & Mouth',
+    'Skin & Hair',
+    'Emergency & Critical Care',
+    'Infection & Immunity',
+  ];
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -94,6 +118,12 @@ const AddDoctors = () => {
             Doctor List
           </button>
         </nav>
+        <button 
+          className="logout-button"
+          onClick={() => navigate('/')}
+        >
+          Logout
+        </button>
       </div>
 
       {/* Main Content */}
@@ -116,14 +146,18 @@ const AddDoctors = () => {
 
               <div className="form-group">
                 <label htmlFor="category">Category</label>
-                <input
-                  type="text"
+                <select
                   id="category"
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
                   required
-                />
+                >
+                  <option value="" disabled>Select a category</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">
@@ -193,9 +227,24 @@ const AddDoctors = () => {
         ) : (
           <div className="doctor-list-section">
             <h1>Doctor List</h1>
+            <div className="form-group" style={{ maxWidth: 300, marginBottom: 20 }}>
+              <input
+                type="text"
+                placeholder="Search by name or category"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+              />
+            </div>
             <div className="doctor-list">
-              {doctors.length > 0 ? (
-                doctors.map((doctor, index) => (
+              {doctors.filter(doctor =>
+                doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                doctor.category.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length > 0 ? (
+                doctors.filter(doctor =>
+                  doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  doctor.category.toLowerCase().includes(searchTerm.toLowerCase())
+                ).map((doctor, index) => (
                   <div key={index} className="doctor-card">
                     <div className="doctor-info">
                       <h3>{doctor.name}</h3>
@@ -208,7 +257,7 @@ const AddDoctors = () => {
                     {doctor.photo && (
                       <div className="doctor-photo">
                         <img 
-                          src={doctor.photo ? `http://localhost:8082/${doctor.photo}` : 'default-image-path.png'} 
+                          src={doctor.photo} 
                           alt={`${doctor.name}'s profile`}
                         />
                       </div>
@@ -216,7 +265,7 @@ const AddDoctors = () => {
                   </div>
                 ))
               ) : (
-                <p className="no-doctors">No doctors added yet.</p>
+                <p className="no-doctors">No doctors found.</p>
               )}
             </div>
           </div>

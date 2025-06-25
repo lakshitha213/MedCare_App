@@ -1,4 +1,4 @@
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView, View, StyleSheet, Text, Image, ScrollView, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,6 +7,7 @@ import SlideBar from './SlideBar';
 
 const Profile = () => {
     const navigation = useNavigation();
+    const route = useRoute();
     const [loading, setLoading] = useState(true);
     const [userData, setUserData] = useState(null);
     const [channelingData, setChannelingData] = useState(null);
@@ -63,9 +64,19 @@ const Profile = () => {
         }
     };
 
-    useEffect(() => {
-        checkLoginAndLoadData();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            const checkAndRedirect = async () => {
+                const userEmail = await AsyncStorage.getItem('userEmail');
+                if (!userEmail) {
+                    navigation.navigate('Login', { redirectTo: 'Profile' });
+                } else {
+                    checkLoginAndLoadData();
+                }
+            };
+            checkAndRedirect();
+        }, [])
+    );
 
     if (loading) {
         return (
@@ -91,27 +102,28 @@ const Profile = () => {
     }
 
     return (
-        <View style={{flex: 1}}>
-            {/* SlideBar Button */}
-            <TouchableOpacity style={{position: 'absolute', top: 40, left: 20, zIndex: 200}} onPress={() => setIsSlideBarOpen(true)}>
-                <Image source={require('../assets/png-transparent-hamburger-button-drop-down-list-computer-icons-navigation-bars-and-page-menu-templates-text-rectangle-black-thumbnail-removebg-preview.png')} style={{width: 30, height: 30}} />
-            </TouchableOpacity>
-            {/* SlideBar Overlay */}
-            {isSlideBarOpen && (
-                <View style={{position: 'absolute', top: 0, left: 0, width: '70%', height: '100%', zIndex: 300}}>
-                    <SlideBar 
-                        onClose={() => setIsSlideBarOpen(false)}
-                        onNavigate={(screen) => {
-                            setIsSlideBarOpen(false);
-                            navigation.navigate(screen);
-                        }}
-                    />
-                </View>
-            )}
-            {/* Main Profile Content */}
-            <ScrollView style={styles.container} contentContainerStyle={{paddingTop: 60}}>
+        <View style={{flex: 1, backgroundColor: '#e6c6f5'}}>
+            <ScrollView style={{ paddingBottom: 30 }}>
+                {/* SlideBar Button */}
+                <TouchableOpacity style={styles.menuBtn} onPress={() => setIsSlideBarOpen(true)}>
+                    <Image source={require('../assets/png-transparent-hamburger-button-drop-down-list-computer-icons-navigation-bars-and-page-menu-templates-text-rectangle-black-thumbnail-removebg-preview.png')} style={{ width: 30, height: 30 }} />
+                </TouchableOpacity>
+                {/* SlideBar Overlay */}
+                {isSlideBarOpen && (
+                    <View style={{ position: 'absolute', top: 0, left: 0, width: '70%', height: '100%', zIndex: 300 }}>
+                        <SlideBar
+                            onClose={() => setIsSlideBarOpen(false)}
+                            onNavigate={(screen) => {
+                                setIsSlideBarOpen(false);
+                                navigation.navigate(screen);
+                            }}
+                        />
+                    </View>
+                )}
+                {/* Main Profile Content */}
                 <SafeAreaView style={styles.safeArea}>
                     <View style={styles.header}>
+                        <Text style={styles.headerText}>Profile</Text>
                         <View style={styles.profileImageContainer}>
                             <Image
                                 source={
@@ -127,7 +139,6 @@ const Profile = () => {
                                 }}
                             />
                         </View>
-                        <Text style={styles.headerText}>Profile</Text>
                     </View>
                     
                     <View style={styles.section}>
@@ -249,9 +260,9 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     header: {
-        flexDirection: 'row',
+        flexDirection: 'column',
         alignItems: 'center',
-        marginTop: 15,
+        marginTop: 10,
         marginBottom: 25,
     },
     profileImageContainer: {
@@ -276,21 +287,24 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     headerText: {
-        fontSize: 22,
-        fontWeight: '600',
+        fontSize: 26,
+        fontWeight: 'bold',
         color: '#2d3436',
-        marginLeft: 15,
+        marginTop: 0,
+        marginBottom: 10,
     },
     section: {
-        backgroundColor: '#ffffff',
-        borderRadius: 10,
-        padding: 20,
+        backgroundColor: '#f8f9fa',
+        borderRadius: 15,
+        paddingHorizontal: 25,
+        paddingVertical: 30,
+        marginHorizontal: 20,
         marginBottom: 25,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 2,
+        shadowRadius: 10,
+        elevation: 8,
     },
     sectionTitle: {
         fontSize: 18,
@@ -313,6 +327,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#2d3436',
         fontWeight: '500',
+    },
+    menuBtn: {
+        marginTop: 10,
+        marginLeft: 10,
+        width: 30,
+        height: 30,
+        zIndex: 200,
     },
 });
 
