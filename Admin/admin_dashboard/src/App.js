@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
 import AddDoctors from './components/AddAdmin/AddDoctors';
 import { useNavigate } from 'react-router';
+import logo from './assets/logo.png';
 
 // Placeholder Login component
 function Login() {
@@ -22,6 +23,7 @@ function Login() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <img src={logo} alt="Logo" style={{ width: 100, marginBottom: 20 }} />
       <h2>Admin Login</h2>
       <form style={{ display: 'flex', flexDirection: 'column', width: 300 }} onSubmit={handleSubmit}>
         <input type="text" placeholder="Username" style={{ marginBottom: 10, padding: 8 }} value={username} onChange={e => setUsername(e.target.value)} />

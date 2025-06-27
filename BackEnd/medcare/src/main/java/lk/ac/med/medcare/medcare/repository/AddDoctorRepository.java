@@ -6,5 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AddDoctorRepository extends JpaRepository<AddDoctor, Long> {
+
     // Additional query methods if needed
-} 
+    AddDoctor findByEmail(String email);
+}
