@@ -16,6 +16,7 @@ public class CorsConfig {
 
         // Allow specific origins
         config.addAllowedOrigin("http://localhost:3000");
+        config.addAllowedOrigin("http://localhost:3001");
         config.addAllowedOrigin("http://localhost:8081");
         config.addAllowedOrigin("http://localhost:8082"); // Add this line
         config.addAllowedOrigin("http://10.0.2.2:8081");

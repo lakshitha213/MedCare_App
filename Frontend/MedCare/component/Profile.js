@@ -170,10 +170,21 @@ const Profile = () => {
                         </View>
                     </View>
                     
+                    {channelingData === null && (
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Channeling Details</Text>
+                            <Text style={{color: 'red', fontWeight: 'bold', marginBottom: 10}}>Appointment deleted</Text>
+                        </View>
+                    )}
+                    
                     {channelingData && (
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Channeling Details</Text>
-                            
+                            {channelingData.status === 'approved' ? (
+                              <Text style={{color: 'green', fontWeight: 'bold', marginBottom: 10}}>Appointment approved</Text>
+                            ) : (
+                              <Text style={{color: 'orange', fontWeight: 'bold', marginBottom: 10}}>Appointment pending due to doctor approval</Text>
+                            )}
                             <View style={styles.detailItem}>
                                 <Text style={styles.detailLabel}>Channeling Name</Text>
                                 <Text style={styles.detailValue}>{channelingData.channelingName}</Text>

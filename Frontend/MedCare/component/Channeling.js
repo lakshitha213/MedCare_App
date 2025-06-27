@@ -4,12 +4,16 @@ import axios from 'axios';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import SlideBar from './SlideBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const Channeling = () => {
   const [doctors, setDoctors] = useState([]);
   const navigation = useNavigation();
   const route = useRoute();
   const [isSlideBarOpen, setIsSlideBarOpen] = useState(false);
+  const [selectedDates, setSelectedDates] = useState({});
+  const [bookedTimes, setBookedTimes] = useState({});
 
   const morningSlots = [
     '8:30 a.m.', '9:30 a.m.', '10:30 a.m.', '11:30 a.m.', '12:30 p.m.'
@@ -55,11 +59,7 @@ const Channeling = () => {
       .catch(err => console.error('Error fetching doctors:', err));
   }, [route.params]);
 
-  const handleNavigate = (screen) => {
-    navigation.navigate(screen);
-  };
-
-  // Group doctors by category
+  // Filter doctors by selected category
   const doctorsByCategory = doctors.reduce((acc, doctor) => {
     const cat = doctor.category || 'Other';
     if (!acc[cat]) acc[cat] = [];
@@ -67,16 +67,36 @@ const Channeling = () => {
     return acc;
   }, {});
 
-  // Filter doctors by selected category
   const filteredDoctors = !selectedCategory || selectedCategory === 'All Doctors'
     ? doctors
     : (doctorsByCategory[selectedCategory] || []);
+
+  // Fetch booked times when date or doctor changes
+  useEffect(() => {
+    filteredDoctors.forEach(doctor => {
+      if (!doctor.id) return;
+      const dateObj = selectedDates[doctor.id] instanceof Date ? selectedDates[doctor.id] : new Date();
+      const date = dateObj.toISOString().split('T')[0];
+      axios.get(`http://localhost:8082/api/channeling/booked-times/${doctor.name}/${date}`)
+        .then(res => {
+          setBookedTimes(prev => ({ ...prev, [doctor.id]: Array.isArray(res.data) ? res.data : [] }));
+        })
+        .catch(() => {
+          setBookedTimes(prev => ({ ...prev, [doctor.id]: [] }));
+        });
+    });
+    // eslint-disable-next-line
+  }, [filteredDoctors, selectedDates]);
+
+  const handleNavigate = (screen) => {
+    navigation.navigate(screen);
+  };
 
   return (
     <View style={{flex: 1, backgroundColor: '#e6c6f5'}}>
       <ScrollView contentContainerStyle={styles.container} style={{paddingTop: 60}}>
         {/* SlideBar Button */}
-        <TouchableOpacity style={styles.menuBtn} onPress={() => setIsSlideBarOpen(true)}>
+        <TouchableOpacity style={[styles.menuBtn, { position: 'absolute', top: 20, left: 20, zIndex: 400 }]} onPress={() => setIsSlideBarOpen(true)}>
           <Image source={require('../assets/png-transparent-hamburger-button-drop-down-list-computer-icons-navigation-bars-and-page-menu-templates-text-rectangle-black-thumbnail-removebg-preview.png')} style={{ width: 30, height: 30 }} />
         </TouchableOpacity>
         {/* SlideBar Overlay */}
@@ -132,6 +152,17 @@ const Channeling = () => {
                     resizeMode="cover"
                   />
                 )}
+                {/* Date Picker inside booking card */}
+                <View style={{ width: '100%', marginBottom: 10, alignItems: 'center' }}>
+                  <Text style={{ fontWeight: 'bold', marginBottom: 4 }}>Select Date</Text>
+                  <DatePicker
+                    selected={selectedDates[doctor.id] || new Date()}
+                    onChange={date => setSelectedDates(prev => ({ ...prev, [doctor.id]: date }))}
+                    minDate={new Date()}
+                    dateFormat="yyyy-MM-dd"
+                    className="calendar-input"
+                  />
+                </View>
                 <View style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginTop: 10}}>
                   {allSlots.map(slot => (
                     <TouchableOpacity
@@ -143,8 +174,10 @@ const Channeling = () => {
                         margin: 4,
                         minWidth: 80,
                         alignItems: 'center',
+                        opacity: Array.isArray(bookedTimes[doctor.id]) && bookedTimes[doctor.id].includes(slot) ? 0.5 : 1
                       }}
                       onPress={() => setSelectedTimes(prev => ({ ...prev, [doctor.id]: slot }))}
+                      disabled={Array.isArray(bookedTimes[doctor.id]) && bookedTimes[doctor.id].includes(slot)}
                     >
                       <Text style={{ color: selectedTimes[doctor.id] === slot ? '#fff' : '#333', fontWeight: 'bold' }}>{slot}</Text>
                     </TouchableOpacity>
@@ -159,7 +192,7 @@ const Channeling = () => {
                       userEmail,
                       doctorName: doctor.name,
                       channelingName: "General Channeling",
-                      date: new Date().toISOString().split('T')[0],
+                      date: (selectedDates[doctor.id] || new Date()).toISOString().split('T')[0],
                       time: selectedTime
                     };
                     await axios.post('http://localhost:8082/api/channeling/add', channelingData);
@@ -195,7 +228,6 @@ const styles = StyleSheet.create({
     },
   name: { fontSize: 18,
      fontWeight: 'bold'
-     
     },
   photo: { width: 80,
      height: 80,
